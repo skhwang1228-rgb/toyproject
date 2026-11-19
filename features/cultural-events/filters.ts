@@ -1,3 +1,4 @@
+import { isAvailableAt, parseClock, parseTimeSlots } from "./time-slots";
 import type { CulturalEvent } from "./types";
 
 export type Fee = "free" | "paid";
@@ -6,6 +7,8 @@ export type Filters = {
   category?: string;
   district?: string;
   fee?: Fee;
+  /** 참여하려는 시각 (HH:MM) */
+  time?: string;
   q?: string;
 };
 
@@ -22,17 +25,20 @@ export function parseFilters(params: Params): Filters {
     category: first(params.category),
     district: first(params.district),
     fee: fee === "free" || fee === "paid" ? fee : undefined,
+    time: parseClock(first(params.time)) === null ? undefined : first(params.time),
     q: first(params.q),
   };
 }
 
 export function applyFilters(events: CulturalEvent[], filters: Filters): CulturalEvent[] {
   const keyword = filters.q?.toLowerCase();
+  const at = parseClock(filters.time);
   return events.filter(
     (event) =>
       (!filters.category || event.category === filters.category) &&
       (!filters.district || event.district === filters.district) &&
       (!filters.fee || event.isFree === (filters.fee === "free")) &&
+      (at === null || isAvailableAt(parseTimeSlots(event.time), at)) &&
       (!keyword || event.title.toLowerCase().includes(keyword)),
   );
 }

@@ -50,3 +50,14 @@ test("선택지는 행사 수가 많은 분류 순, 자치구는 가나다 순�
   expect(options.categories[0]).toBe("콘서트");
   expect(options.districts).toEqual(["강남구", "마포구", "종로구"]);
 });
+
+test("참여 시각 필터는 운영 시간 범위와 곧 시작하는 회차를 고른다", () => {
+  const timed = [
+    event({ id: "range", time: "10:00~21:00" }),
+    event({ id: "start-soon", time: "19:30" }),
+    event({ id: "start-late", time: "21:00" }),
+    event({ id: "closed", time: "10:00~18:00" }),
+    event({ id: "unknown", time: "프로그램별 상이" }),
+  ];
+  expect(applyFilters(timed, { time: "19:00" }).map((e) => e.id)).toEqual(["range", "start-soon"]);
+});

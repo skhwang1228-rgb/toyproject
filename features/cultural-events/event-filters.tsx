@@ -20,6 +20,14 @@ const FEE_ITEMS = [
   { value: "paid", label: "유료" },
 ];
 
+const TIME_ITEMS = [
+  { value: ALL, label: "시간 전체" },
+  ...Array.from({ length: 16 }, (_, i) => {
+    const value = `${String(i + 8).padStart(2, "0")}:00`;
+    return { value, label: `${i + 8}시에 참여` };
+  }),
+];
+
 export function EventFilters({
   view,
   anchor,
@@ -79,6 +87,25 @@ export function EventFilters({
         <SelectContent>
           <SelectGroup>
             {FEE_ITEMS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+
+      <Select
+        items={TIME_ITEMS}
+        value={filters.time ?? ALL}
+        onValueChange={(value) => update({ ...filters, time: value === ALL ? undefined : (value ?? undefined) })}
+      >
+        <SelectTrigger aria-label="참여 시간" className="w-36">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {TIME_ITEMS.map((item) => (
               <SelectItem key={item.value} value={item.value}>
                 {item.label}
               </SelectItem>
