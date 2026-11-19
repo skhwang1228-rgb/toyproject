@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 
 import { eventsHref } from "./href";
+import type { Filters } from "./filters";
 import type { DayGroup, Period } from "./period";
 import type { CulturalEvent } from "./types";
 
@@ -74,11 +75,13 @@ export function EventList({
   total,
   shown,
   period,
+  filters,
 }: {
   groups: DayGroup[];
   total: number;
   shown: number;
   period: Period;
+  filters: Filters;
 }) {
   if (total === 0) {
     return (
@@ -111,7 +114,7 @@ export function EventList({
       {shown < total && (
         <div className="flex justify-center">
           <Link
-            href={eventsHref(period.view, period.anchor, shown + 60)}
+            href={eventsHref(period.view, period.anchor, filters, shown + 60)}
             className={buttonVariants({ variant: "outline" })}
             scroll={false}
           >

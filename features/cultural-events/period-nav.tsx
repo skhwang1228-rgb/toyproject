@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { eventsHref } from "./href";
+import type { Filters } from "./filters";
 import { shiftAnchor, type Period } from "./period";
 
 function formatTitle(period: Period): string {
@@ -16,13 +17,13 @@ function formatTitle(period: Period): string {
   return `${year}년 ${Number(month)}월 ${Number(startDay)}일 ~ ${endLabel}`;
 }
 
-export function PeriodNav({ period, today }: { period: Period; today: string }) {
+export function PeriodNav({ period, today, filters }: { period: Period; today: string; filters: Filters }) {
   const unit = period.view === "month" ? "달" : "주";
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         <Link
-          href={eventsHref(period.view, shiftAnchor(period, -1))}
+          href={eventsHref(period.view, shiftAnchor(period, -1), filters)}
           aria-label={`이전 ${unit}`}
           className={buttonVariants({ variant: "outline", size: "icon" })}
         >
@@ -32,13 +33,13 @@ export function PeriodNav({ period, today }: { period: Period; today: string }) 
           {formatTitle(period)}
         </h2>
         <Link
-          href={eventsHref(period.view, shiftAnchor(period, 1))}
+          href={eventsHref(period.view, shiftAnchor(period, 1), filters)}
           aria-label={`다음 ${unit}`}
           className={buttonVariants({ variant: "outline", size: "icon" })}
         >
           <ChevronRightIcon />
         </Link>
-        <Link href={eventsHref(period.view, today)} className={buttonVariants({ variant: "ghost" })}>
+        <Link href={eventsHref(period.view, today, filters)} className={buttonVariants({ variant: "ghost" })}>
           오늘
         </Link>
       </div>
@@ -46,7 +47,7 @@ export function PeriodNav({ period, today }: { period: Period; today: string }) 
         {(["month", "week"] as const).map((view) => (
           <Link
             key={view}
-            href={eventsHref(view, period.anchor)}
+            href={eventsHref(view, period.anchor, filters)}
             aria-current={period.view === view ? "page" : undefined}
             className={cn(buttonVariants({ variant: period.view === view ? "default" : "outline" }))}
           >

@@ -2,16 +2,21 @@ import { CircleAlertIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  EventFilters,
   EventList,
   MonthCalendar,
   PeriodNav,
+  applyFilters,
   eventsInPeriod,
   fetchCulturalEvents,
+  filterOptions,
   getPeriod,
   groupByStartDay,
   isIsoDate,
+  parseFilters,
   startCountByDay,
   todayInSeoul,
+  type Filters,
   type View,
 } from "@/features/cultural-events";
 
@@ -25,6 +30,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const view: View = first(params.view) === "week" ? "week" : "month";
   const date = first(params.date);
   const period = getPeriod(view, isIsoDate(date) ? date : today);
+  const filters = parseFilters(params);
   const limit = Math.max(PAGE_SIZE, Number(first(params.limit)) || PAGE_SIZE);
 
   const result = await fetchCulturalEvents();
@@ -36,7 +42,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <p className="text-sm text-muted-foreground">서울문화포털의 공연, 전시, 행사를 월간과 주간으로 모아 봅니다.</p>
       </header>
 
-      <PeriodNav period={period} today={today} />
+      <PeriodNav period={period} today={today} filters={filters} />
 
       {result.status === "error" ? (
         <Alert variant="destructive">
@@ -45,31 +51,49 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <AlertDescription>{result.message}</AlertDescription>
         </Alert>
       ) : (
-        <Events events={eventsInPeriod(result.events, period)} period={period} today={today} limit={limit} />
+        <Events
+          periodEvents={eventsInPeriod(result.events, period)}
+          period={period}
+          today={today}
+          filters={filters}
+          limit={limit}
+        />
       )}
     </main>
   );
 }
 
 function Events({
-  events,
+  periodEvents,
   period,
   today,
+  filters,
   limit,
 }: {
-  events: ReturnType<typeof eventsInPeriod>;
+  periodEvents: ReturnType<typeof eventsInPeriod>;
   period: ReturnType<typeof getPeriod>;
   today: string;
+  filters: Filters;
   limit: number;
 }) {
+  const events = applyFilters(periodEvents, filters);
   const visible = events.slice(0, limit);
   return (
     <>
-      {period.view === "month" && <MonthCalendar period={period} counts={startCountByDay(events)} today={today} />}
+      <EventFilters view={period.view} anchor={period.anchor} filters={filters} options={filterOptions(periodEvents)} />
+      {period.view === "month" && (
+        <MonthCalendar period={period} counts={startCountByDay(events)} today={today} filters={filters} />
+      )}
       <p className="text-sm text-muted-foreground">
         이 기간의 행사 <span className="font-semibold text-foreground">{events.length.toLocaleString()}</span>건
       </p>
-      <EventList groups={groupByStartDay(visible, period)} total={events.length} shown={visible.length} period={period} />
+      <EventList
+        groups={groupByStartDay(visible, period)}
+        total={events.length}
+        shown={visible.length}
+        period={period}
+        filters={filters}
+      />
     </>
   );
 }
