@@ -2,6 +2,7 @@ import type { CulturalEvent, EventsResult } from "./types";
 
 const BASE_URL = "http://openapi.seoul.go.kr:8088";
 const PAGE_SIZE = 1000;
+const CONCURRENCY = 4;
 const REVALIDATE_SECONDS = 60 * 60;
 
 type RawRow = Record<string, string | null | undefined>;
@@ -59,6 +60,14 @@ async function fetchPage(key: string, start: number, end: number): Promise<RawRe
   }
 }
 
+async function fetchPageWithRetry(key: string, start: number, end: number): Promise<RawResponse> {
+  try {
+    return await fetchPage(key, start, end);
+  } catch {
+    return await fetchPage(key, start, end);
+  }
+}
+
 /** 서울시 문화행사 전체를 가져온다. 서버에서만 호출한다. */
 export async function fetchCulturalEvents(): Promise<EventsResult> {
   const key = process.env.SEOUL_OPEN_API_KEY;
@@ -67,18 +76,23 @@ export async function fetchCulturalEvents(): Promise<EventsResult> {
   }
 
   try {
-    const first = await fetchPage(key, 1, PAGE_SIZE);
+    const first = await fetchPageWithRetry(key, 1, PAGE_SIZE);
     const info = first.culturalEventInfo;
     if (!info) {
       return { status: "error", message: first.RESULT?.MESSAGE ?? "서울시 API가 데이터를 돌려주지 않았습니다." };
     }
 
     const total = info.list_total_count ?? 0;
-    const rest: Promise<RawResponse>[] = [];
+    const ranges: [number, number][] = [];
     for (let start = PAGE_SIZE + 1; start <= total; start += PAGE_SIZE) {
-      rest.push(fetchPage(key, start, Math.min(start + PAGE_SIZE - 1, total)));
+      ranges.push([start, Math.min(start + PAGE_SIZE - 1, total)]);
     }
-    const pages = [first, ...(await Promise.all(rest))];
+    // 서울시 서버가 동시 요청에 약해 몇 개씩 나눠 가져온다.
+    const pages = [first];
+    for (let i = 0; i < ranges.length; i += CONCURRENCY) {
+      const batch = ranges.slice(i, i + CONCURRENCY);
+      pages.push(...(await Promise.all(batch.map(([start, end]) => fetchPageWithRetry(key, start, end)))));
+    }
 
     const events = pages
       .flatMap((page) => page.culturalEventInfo?.row ?? [])
