@@ -48,7 +48,15 @@ async function fetchPage(key: string, start: number, end: number): Promise<RawRe
     next: { revalidate: REVALIDATE_SECONDS },
   });
   if (!response.ok) throw new Error(`서울시 API 응답 오류 (${response.status})`);
-  return (await response.json()) as RawResponse;
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as RawResponse;
+  } catch {
+    // 인증키 오류 등은 JSON이 아니라 XML로 내려온다.
+    const code = text.match(/<CODE>(.*?)<\/CODE>/)?.[1];
+    const message = text.match(/<MESSAGE>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/MESSAGE>/)?.[1]?.split("\n")[0];
+    throw new Error(code ? `서울시 API 오류 ${code}: ${message ?? ""}` : "서울시 API 응답을 해석하지 못했습니다.");
+  }
 }
 
 /** 서울시 문화행사 전체를 가져온다. 서버에서만 호출한다. */
