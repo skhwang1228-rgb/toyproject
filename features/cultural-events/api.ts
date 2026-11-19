@@ -60,15 +60,25 @@ async function fetchPage(key: string, start: number, end: number): Promise<RawRe
   }
 }
 
+const MAX_ATTEMPTS = 4;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// 서울시 서버가 간헐적으로 ERROR-500을 내서 간격을 늘리며 다시 시도한다.
 async function fetchPageWithRetry(key: string, start: number, end: number): Promise<RawResponse> {
-  try {
-    return await fetchPage(key, start, end);
-  } catch {
-    return await fetchPage(key, start, end);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fetchPage(key, start, end);
+    } catch (error) {
+      lastError = error;
+      if (attempt < MAX_ATTEMPTS) await sleep(400 * attempt);
+    }
   }
+  throw lastError;
 }
 
-/** 서울시 문화행사 전체를 가져온다. 서버에서만 호출한다. */
+/** 서울시 문화행사 전체를 가져온다. 서버에서만 호출한다. 일부 구간만 실패하면 나머지는 보여준다. */
 export async function fetchCulturalEvents(): Promise<EventsResult> {
   const key = process.env.SEOUL_OPEN_API_KEY;
   if (!key) {
@@ -87,18 +97,24 @@ export async function fetchCulturalEvents(): Promise<EventsResult> {
     for (let start = PAGE_SIZE + 1; start <= total; start += PAGE_SIZE) {
       ranges.push([start, Math.min(start + PAGE_SIZE - 1, total)]);
     }
+
     // 서울시 서버가 동시 요청에 약해 몇 개씩 나눠 가져온다.
     const pages = [first];
+    const failedRanges: string[] = [];
     for (let i = 0; i < ranges.length; i += CONCURRENCY) {
       const batch = ranges.slice(i, i + CONCURRENCY);
-      pages.push(...(await Promise.all(batch.map(([start, end]) => fetchPageWithRetry(key, start, end)))));
+      const settled = await Promise.allSettled(batch.map(([start, end]) => fetchPageWithRetry(key, start, end)));
+      settled.forEach((result, index) => {
+        if (result.status === "fulfilled") pages.push(result.value);
+        else failedRanges.push(`${batch[index][0]}~${batch[index][1]}`);
+      });
     }
 
     const events = pages
       .flatMap((page) => page.culturalEventInfo?.row ?? [])
       .map(toEvent)
       .filter((event): event is CulturalEvent => event !== null);
-    return { status: "ok", events };
+    return { status: "ok", events, failedRanges };
   } catch (error) {
     return {
       status: "error",

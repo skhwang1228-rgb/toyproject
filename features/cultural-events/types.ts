@@ -17,5 +17,5 @@ export type CulturalEvent = {
 };
 
 export type EventsResult =
-  | { status: "ok"; events: CulturalEvent[] }
+  | { status: "ok"; events: CulturalEvent[]; failedRanges: string[] }
   | { status: "error"; message: string };

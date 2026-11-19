@@ -51,13 +51,24 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <AlertDescription>{result.message}</AlertDescription>
         </Alert>
       ) : (
-        <Events
-          periodEvents={eventsInPeriod(result.events, period)}
-          period={period}
-          today={today}
-          filters={filters}
-          limit={limit}
-        />
+        <>
+          {result.failedRanges.length > 0 && (
+            <Alert>
+              <CircleAlertIcon />
+              <AlertTitle>일부 행사를 불러오지 못했습니다</AlertTitle>
+              <AlertDescription>
+                서울시 서버 응답이 불안정해 일부 구간({result.failedRanges.join(", ")}번째)이 빠졌습니다. 잠시 뒤 새로고침하면 다시 시도합니다.
+              </AlertDescription>
+            </Alert>
+          )}
+          <Events
+            periodEvents={eventsInPeriod(result.events, period)}
+            period={period}
+            today={today}
+            filters={filters}
+            limit={limit}
+          />
+        </>
       )}
     </main>
   );
