@@ -56,7 +56,7 @@ async function fetchPage(key: string, start: number, end: number): Promise<RawRe
     // 인증키 오류 등은 JSON이 아니라 XML로 내려온다.
     const code = text.match(/<CODE>(.*?)<\/CODE>/)?.[1];
     const message = text.match(/<MESSAGE>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/MESSAGE>/)?.[1]?.split("\n")[0];
-    throw new Error(code ? `서울시 API 오류 ${code}: ${message ?? ""}` : "서울시 API 응답을 해석하지 못했습니다.");
+    throw new Error(code ? `서울시 API 오류 ${code}: ${message ?? ""} (${start}~${end}번째 행사)` : "서울시 API 응답을 해석하지 못했습니다.");
   }
 }
 
