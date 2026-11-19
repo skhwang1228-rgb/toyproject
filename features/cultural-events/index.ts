@@ -1,4 +1,5 @@
 export { fetchCulturalEvents } from "./api";
+export { CalendarPanel } from "./calendar-panel";
 export { EventFilters } from "./event-filters";
 export { EventList } from "./event-list";
 export { applyFilters, filterOptions, parseFilters, type Filters } from "./filters";
@@ -13,3 +14,4 @@ export {
   todayInSeoul,
   type View,
 } from "./period";
+export type { CulturalEvent } from "./types";

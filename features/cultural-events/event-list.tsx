@@ -28,7 +28,7 @@ function formatRange(event: CulturalEvent): string {
 
 function EventCard({ event }: { event: CulturalEvent }) {
   const content = (
-    <Card size="sm" className="h-full transition-colors hover:bg-muted/50">
+    <Card size="sm" className="h-full min-w-0 transition-colors hover:bg-muted/50">
       <CardContent className="flex gap-3">
         {event.imageUrl ? (
           <Image
@@ -64,7 +64,7 @@ function EventCard({ event }: { event: CulturalEvent }) {
 
   if (!event.link) return content;
   return (
-    <Link href={event.link} target="_blank" rel="noopener noreferrer" className="block">
+    <Link href={event.link} target="_blank" rel="noopener noreferrer" className="block min-w-0">
       {content}
     </Link>
   );
@@ -104,7 +104,7 @@ export function EventList({
           <h3 className="text-sm font-semibold text-muted-foreground">
             {group.label === "ongoing" ? "이전부터 진행 중" : formatDay(group.label)}
           </h3>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {group.events.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}

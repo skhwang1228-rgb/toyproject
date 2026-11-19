@@ -49,7 +49,7 @@ export function EventFilters({
 
   return (
     <form
-      className="flex flex-wrap items-center gap-2"
+      className="grid grid-cols-2 gap-2 lg:grid-cols-1"
       role="search"
       aria-label="행사 필터"
       onSubmit={(event) => {
@@ -62,7 +62,7 @@ export function EventFilters({
         value={filters.category ?? ALL}
         onValueChange={(value) => update({ ...filters, category: value === ALL ? undefined : (value ?? undefined) })}
       >
-        <SelectTrigger aria-label="분류" className="w-36">
+        <SelectTrigger aria-label="분류" className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -81,7 +81,7 @@ export function EventFilters({
         value={filters.fee ?? ALL}
         onValueChange={(value) => update({ ...filters, fee: value === ALL ? undefined : (value as Fee) })}
       >
-        <SelectTrigger aria-label="요금" className="w-36">
+        <SelectTrigger aria-label="요금" className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -100,7 +100,7 @@ export function EventFilters({
         value={filters.time ?? ALL}
         onValueChange={(value) => update({ ...filters, time: value === ALL ? undefined : (value ?? undefined) })}
       >
-        <SelectTrigger aria-label="참여 시간" className="w-36">
+        <SelectTrigger aria-label="참여 시간" className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -119,7 +119,7 @@ export function EventFilters({
         value={filters.district ?? ALL}
         onValueChange={(value) => update({ ...filters, district: value === ALL ? undefined : (value ?? undefined) })}
       >
-        <SelectTrigger aria-label="자치구" className="w-36">
+        <SelectTrigger aria-label="자치구" className="w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -133,7 +133,7 @@ export function EventFilters({
         </SelectContent>
       </Select>
 
-      <div className="relative min-w-40 flex-1">
+      <div className="relative col-span-2 lg:col-span-1">
         <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
@@ -149,6 +149,7 @@ export function EventFilters({
         <Button
           type="button"
           variant="ghost"
+          className="col-span-2 lg:col-span-1"
           onClick={() => {
             setKeyword("");
             update({});

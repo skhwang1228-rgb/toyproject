@@ -2,6 +2,7 @@ import { CircleAlertIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  CalendarPanel,
   EventFilters,
   EventList,
   MonthCalendar,
@@ -16,6 +17,7 @@ import {
   parseFilters,
   startCountByDay,
   todayInSeoul,
+  type CulturalEvent,
   type Filters,
   type View,
 } from "@/features/cultural-events";
@@ -62,7 +64,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             </Alert>
           )}
           <Events
-            periodEvents={eventsInPeriod(result.events, period)}
+            allEvents={result.events}
             period={period}
             today={today}
             filters={filters}
@@ -75,26 +77,40 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 }
 
 function Events({
-  periodEvents,
+  allEvents,
   period,
   today,
   filters,
   limit,
 }: {
-  periodEvents: ReturnType<typeof eventsInPeriod>;
+  allEvents: CulturalEvent[];
   period: ReturnType<typeof getPeriod>;
   today: string;
   filters: Filters;
   limit: number;
 }) {
+  const periodEvents = eventsInPeriod(allEvents, period);
   const events = applyFilters(periodEvents, filters);
   const visible = events.slice(0, limit);
+
+  // 달력은 항상 기준일이 속한 달을 보여준다. 주간 보기에서도 그 달의 날짜별 행사 수가 필요하다.
+  const month = getPeriod("month", period.anchor);
+  const monthEvents = period.view === "month" ? events : applyFilters(eventsInPeriod(allEvents, month), filters);
+
   return (
     <>
-      <EventFilters view={period.view} anchor={period.anchor} filters={filters} options={filterOptions(periodEvents)} />
-      {period.view === "month" && (
-        <MonthCalendar period={period} counts={startCountByDay(events)} today={today} filters={filters} />
-      )}
+      <div className="grid gap-4 lg:grid-cols-[1fr_20rem] lg:items-start">
+        <EventFilters view={period.view} anchor={period.anchor} filters={filters} options={filterOptions(periodEvents)} />
+        <CalendarPanel key={period.view} defaultOpen={period.view === "month"}>
+          <MonthCalendar
+            month={month}
+            selected={period}
+            counts={startCountByDay(monthEvents)}
+            today={today}
+            filters={filters}
+          />
+        </CalendarPanel>
+      </div>
       <p className="text-sm text-muted-foreground">
         이 기간의 행사 <span className="font-semibold text-foreground">{events.length.toLocaleString()}</span>건
       </p>
